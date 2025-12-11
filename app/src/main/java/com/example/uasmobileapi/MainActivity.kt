@@ -1,47 +1,62 @@
 package com.example.uasmobileapi
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.uasmobileapi.ui.theme.UASMobileAPITheme
+import android.util.Log
+import android.view.View
+import android.widget.ProgressBar
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var rvEvents: RecyclerView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var eventAdapter: EventAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            UASMobileAPITheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+        setContentView(R.layout.activity_main) // Ini menghubungkan ke Layout XML
+
+        rvEvents = findViewById(R.id.rvEvents)
+        progressBar = findViewById(R.id.progressBar)
+
+        rvEvents.layoutManager = LinearLayoutManager(this)
+
+        fetchEvents()
+    }
+
+    private fun fetchEvents() {
+        progressBar.visibility = View.VISIBLE
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = RetrofitClient.instance.getAllEvents()
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    if (response.isSuccessful) {
+                        val events = response.body()?.data
+                        if (events != null) {
+                            eventAdapter = EventAdapter(events)
+                            rvEvents.adapter = eventAdapter
+                        } else {
+                            Toast.makeText(this@MainActivity, "Data Kosong", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(this@MainActivity, "Error: ${response.message()}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(this@MainActivity, "Gagal Koneksi: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Log.e("API_ERROR", e.toString())
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    UASMobileAPITheme {
-        Greeting("Android")
     }
 }
