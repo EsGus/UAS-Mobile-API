@@ -7,7 +7,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-// Tambahkan parameter onEditClick dan onDeleteClick di konstruktor
+
 class EventAdapter(
     private val events: List<EventModel>,
     private val onEditClick: (EventModel) -> Unit,
@@ -35,7 +35,7 @@ class EventAdapter(
         holder.tvDate.text = "${event.date} | ${event.time}"
         holder.tvStatus.text = event.status
 
-        // Pasang listener klik
+
         holder.btnEdit.setOnClickListener { onEditClick(event) }
         holder.btnDelete.setOnClickListener { onDeleteClick(event) }
     }

@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         fetchEvents()
     }
 
-    // Dipanggil setiap kali kita kembali ke halaman ini (misal habis dari EditActivity)
+
     override fun onResume() {
         super.onResume()
         fetchEvents()
@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         val events = response.body()?.data
                         if (events != null) {
-                            // Update Adapter dengan Lambda function untuk Edit & Delete
+
                             eventAdapter = EventAdapter(events,
                                 onEditClick = { event ->
                                     // Aksi Edit: Pindah ke EditActivity bawa data

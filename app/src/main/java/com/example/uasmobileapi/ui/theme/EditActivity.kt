@@ -66,7 +66,7 @@ class EditActivity : AppCompatActivity() {
         progressBar.isVisible = true
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Panggil API Update
+
                 val response = RetrofitClient.instance.updateEvent(id, updatedEvent)
                 withContext(Dispatchers.Main) {
                     progressBar.isVisible = false
