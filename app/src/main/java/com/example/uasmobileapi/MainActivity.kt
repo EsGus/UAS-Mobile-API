@@ -1,10 +1,12 @@
 package com.example.uasmobileapi
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,13 +23,20 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main) // Ini menghubungkan ke Layout XML
+        setContentView(R.layout.activity_main)
 
         rvEvents = findViewById(R.id.rvEvents)
         progressBar = findViewById(R.id.progressBar)
 
         rvEvents.layoutManager = LinearLayoutManager(this)
 
+        // Panggil fetchEvents pertama kali
+        fetchEvents()
+    }
+
+    // Dipanggil setiap kali kita kembali ke halaman ini (misal habis dari EditActivity)
+    override fun onResume() {
+        super.onResume()
         fetchEvents()
     }
 
@@ -41,7 +50,25 @@ class MainActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         val events = response.body()?.data
                         if (events != null) {
-                            eventAdapter = EventAdapter(events)
+                            // Update Adapter dengan Lambda function untuk Edit & Delete
+                            eventAdapter = EventAdapter(events,
+                                onEditClick = { event ->
+                                    // Aksi Edit: Pindah ke EditActivity bawa data
+                                    val intent = Intent(this@MainActivity, EditActivity::class.java)
+                                    intent.putExtra("id", event.id)
+                                    intent.putExtra("title", event.title)
+                                    intent.putExtra("date", event.date)
+                                    intent.putExtra("time", event.time)
+                                    intent.putExtra("location", event.location)
+                                    intent.putExtra("description", event.description)
+                                    intent.putExtra("status", event.status)
+                                    startActivity(intent)
+                                },
+                                onDeleteClick = { event ->
+                                    // Aksi Delete: Konfirmasi dulu
+                                    showDeleteConfirmation(event)
+                                }
+                            )
                             rvEvents.adapter = eventAdapter
                         } else {
                             Toast.makeText(this@MainActivity, "Data Kosong", Toast.LENGTH_SHORT).show()
@@ -54,7 +81,42 @@ class MainActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     progressBar.visibility = View.GONE
                     Toast.makeText(this@MainActivity, "Gagal Koneksi: ${e.message}", Toast.LENGTH_SHORT).show()
-                    Log.e("API_ERROR", e.toString())
+                }
+            }
+        }
+    }
+
+    private fun showDeleteConfirmation(event: EventModel) {
+        AlertDialog.Builder(this)
+            .setTitle("Hapus Event")
+            .setMessage("Yakin ingin menghapus ${event.title}?")
+            .setPositiveButton("Ya") { _, _ ->
+                deleteEvent(event.id)
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun deleteEvent(id: String?) {
+        if (id == null) return
+
+        progressBar.visibility = View.VISIBLE
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = RetrofitClient.instance.deleteEvent(id)
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    if (response.isSuccessful) {
+                        Toast.makeText(this@MainActivity, "Event Dihapus", Toast.LENGTH_SHORT).show()
+                        fetchEvents() // Refresh list setelah hapus
+                    } else {
+                        Toast.makeText(this@MainActivity, "Gagal Hapus", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }

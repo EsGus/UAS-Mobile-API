@@ -60,4 +60,9 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0") // Berisi RecyclerView & CardView
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    // WAJIB ADA: Agar <androidx.cardview.widget.CardView> di item_event.xml terbaca
+    implementation("androidx.cardview:cardview:1.0.0")
+
+    // DISARANKAN: Agar RecyclerView lebih stabil versinya
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 }
