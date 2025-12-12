@@ -2,7 +2,6 @@ package com.example.uasmobileapi
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -10,6 +9,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+// Import FloatingActionButton
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,24 +20,33 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var rvEvents: RecyclerView
     private lateinit var progressBar: ProgressBar
+    private lateinit var fabAdd: FloatingActionButton // 1. Variabel Tombol Tambah
     private lateinit var eventAdapter: EventAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // 2. Inisialisasi View
         rvEvents = findViewById(R.id.rvEvents)
         progressBar = findViewById(R.id.progressBar)
+        fabAdd = findViewById(R.id.fabAdd) // Pastikan ID ini sama dengan di XML
 
         rvEvents.layoutManager = LinearLayoutManager(this)
+
+        // 3. Logika Klik Tombol Tambah (Pindah ke AddActivity)
+        fabAdd.setOnClickListener {
+            val intent = Intent(this@MainActivity, AddActivity::class.java)
+            startActivity(intent)
+        }
 
         // Panggil fetchEvents pertama kali
         fetchEvents()
     }
 
-
     override fun onResume() {
         super.onResume()
+        // Refresh data saat kembali ke halaman ini (misal setelah add atau edit)
         fetchEvents()
     }
 
@@ -50,7 +60,7 @@ class MainActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         val events = response.body()?.data
                         if (events != null) {
-
+                            // Setup Adapter dengan aksi Edit dan Delete
                             eventAdapter = EventAdapter(events,
                                 onEditClick = { event ->
                                     // Aksi Edit: Pindah ke EditActivity bawa data
